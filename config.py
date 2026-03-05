@@ -44,7 +44,7 @@ REQUIRED_CHANNELS = [
 SUBSCRIPTION_BONUS = 100
 
 # URL Mini-app для кейса с голдой
-CASE_APP_URL = "https://case-app-gamma.vercel.app/"
+CASE_APP_URL = "https://case-app-git-main-tormoz1221-stacks-projects.vercel.app/"
 
 # URL API сервера (для миниаппа)
 API_URL = os.getenv("API_URL", "http://localhost:5000")
