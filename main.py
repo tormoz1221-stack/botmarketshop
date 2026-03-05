@@ -12,6 +12,11 @@ from config import BOT_TOKEN, ADMIN_ID, SHOP_NAME, CARD_NUMBER, CARD_HOLDER, REV
 # Flask приложение для API
 app = Flask(__name__)
 
+# Корневой маршрут для проверки работы
+@app.route('/', methods=['GET'])
+def index():
+    return 'Bot is running!'
+
 # Хранилище для Mini-app сессий (token: user_id)
 app_sessions = {}
 
