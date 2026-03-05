@@ -1,0 +1,1988 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Магазин</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            color: white;
+        }
+
+        .header {
+            background: linear-gradient(180deg, #2a2a4a 0%, #1a1a3a 100%);
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #3a3a5a;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header h1 {
+            font-size: 18px;
+            background: linear-gradient(90deg, #ffd700, #ffaa00);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .balance {
+            background: rgba(255, 215, 0, 0.2);
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 14px;
+            color: #ffd700;
+            font-weight: bold;
+        }
+
+        .nav {
+            display: flex;
+            background: #1a1a3a;
+            padding: 10px;
+            gap: 10px;
+            overflow-x: auto;
+        }
+
+        .nav-btn {
+            background: #2a2a4a;
+            border: none;
+            color: #888;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.2s ease;
+        }
+
+        .nav-btn:active {
+            transform: scale(0.95);
+        }
+
+        .nav-btn.active {
+            background: linear-gradient(180deg, #ffd700 0%, #ffaa00 100%);
+            color: #1a1a2e;
+            font-weight: bold;
+        }
+
+        .content {
+            padding: 15px;
+        }
+
+        .page {
+            display: none;
+        }
+
+        .page.active {
+            display: block;
+        }
+
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal-overlay.show {
+            display: flex;
+        }
+
+        .modal {
+            background: linear-gradient(180deg, #2a2a4a 0%, #1a1a3a 100%);
+            border-radius: 15px;
+            padding: 20px;
+            width: 100%;
+            max-width: 350px;
+            border: 2px solid #3a3a5a;
+        }
+
+        .modal-title {
+            font-size: 18px;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .modal-product {
+            background: #1a1a2e;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .modal-product-name {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .modal-product-price {
+            color: #4ade80;
+            font-size: 18px;
+        }
+
+        .modal-input {
+            width: 100%;
+            background: #1a1a2e;
+            border: 2px solid #3a3a5a;
+            color: white;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 14px;
+            margin-bottom: 15px;
+        }
+
+        .modal-input:focus {
+            outline: none;
+            border-color: #ffd700;
+        }
+
+        .modal-hint {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 15px;
+        }
+
+        .modal-btns {
+            display: flex;
+            gap: 10px;
+        }
+
+        .modal-btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .modal-btn-buy {
+            background: #22c55e;
+            color: white;
+        }
+
+        .modal-btn-cancel {
+            background: #4a4a6a;
+            color: white;
+        }
+
+        .games-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+
+        .game-card {
+            background: linear-gradient(180deg, #2a2a4a 0%, #1a1a3a 100%);
+            border-radius: 12px;
+            padding: 15px;
+            text-align: center;
+            border: 2px solid #3a3a5a;
+            cursor: pointer;
+        }
+
+        .game-card:active {
+            transform: scale(0.98);
+        }
+
+        .game-icon {
+            width: 60px;
+            height: 60px;
+            object-fit: contain;
+            margin-bottom: 8px;
+            border-radius: 10px;
+        }
+
+        .game-name {
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .category-title {
+            font-size: 16px;
+            margin-bottom: 15px;
+            color: #aaa;
+        }
+
+        .products-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+
+        .product-card {
+            background: linear-gradient(180deg, #2a2a4a 0%, #1a1a3a 100%);
+            border-radius: 12px;
+            padding: 15px;
+            text-align: center;
+            border: 2px solid #3a3a5a;
+            cursor: pointer;
+        }
+
+        .product-card.case {
+            border-color: #ffd700;
+        }
+
+        .product-icon {
+            font-size: 36px;
+            margin-bottom: 8px;
+        }
+
+        .product-name {
+            font-size: 13px;
+            margin-bottom: 5px;
+        }
+
+        .product-price {
+            color: #4ade80;
+            font-weight: bold;
+        }
+
+        .case-box {
+            background: linear-gradient(180deg, #2a2a4a 0%, #1a1a3a 100%);
+            border-radius: 15px;
+            padding: 15px;
+            border: 2px solid #3a3a5a;
+            margin-bottom: 15px;
+        }
+
+        .case-icon {
+            font-size: 50px;
+            text-align: center;
+            margin-bottom: 5px;
+        }
+
+        .case-title {
+            text-align: center;
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .drum-container {
+            position: relative;
+            width: 100%;
+            height: 100px;
+            background: #0d0d1a;
+            border-radius: 10px;
+            overflow: hidden;
+            border: 2px solid #4a4a6a;
+        }
+
+        .center-line {
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, transparent, #ffd700, transparent);
+            transform: translateY(-50%);
+            z-index: 10;
+            box-shadow: 0 0 15px #ffd700;
+        }
+
+        .drum {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            will-change: transform;
+        }
+
+        .prize-item {
+            width: 100%;
+            height: 100px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            font-weight: bold;
+            border-bottom: 1px solid #2a2a4a;
+        }
+
+        .prize-item.gold { 
+            background: linear-gradient(135deg, #ffd700 0%, #ffaa00 100%); 
+            color: #1a1a2e;
+        }
+        .prize-item.silver { 
+            background: linear-gradient(135deg, #e0e0e0 0%, #b0b0b0 100%); 
+            color: #1a1a2e;
+        }
+        .prize-item.bronze { 
+            background: linear-gradient(135deg, #cd7f32 0%, #b87333 100%); 
+            color: #1a1a2e;
+        }
+        .prize-item.common { 
+            background: linear-gradient(135deg, #4a4a6a 0%, #3a3a5a 100%);
+        }
+
+        .drum-container::before,
+        .drum-container::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            right: 0;
+            height: 25px;
+            z-index: 5;
+            pointer-events: none;
+        }
+
+        .drum-container::before {
+            top: 0;
+            background: linear-gradient(to bottom, #0d0d1a 60%, transparent 100%);
+        }
+
+        .drum-container::after {
+            bottom: 0;
+            background: linear-gradient(to top, #0d0d1a 60%, transparent 100%);
+        }
+
+        .open-btn {
+            width: 100%;
+            background: linear-gradient(180deg, #ffd700 0%, #ffaa00 100%);
+            border: none;
+            border-radius: 12px;
+            padding: 15px;
+            font-size: 18px;
+            font-weight: bold;
+            color: #1a1a2e;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(255, 215, 0, 0.4);
+        }
+
+        .open-btn:disabled {
+            background: #4a4a6a;
+            color: #888;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        .result-box {
+            display: none;
+            text-align: center;
+            margin-top: 15px;
+            padding: 20px;
+            background: linear-gradient(180deg, #2a2a4a 0%, #1a1a3a 100%);
+            border-radius: 15px;
+            border: 2px solid #3a3a5a;
+        }
+
+        .result-box.show {
+            display: block;
+        }
+
+        .result-amount {
+            font-size: 42px;
+            font-weight: bold;
+            background: linear-gradient(90deg, #ffd700, #ffaa00);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin: 10px 0;
+        }
+
+        .result-price {
+            font-size: 20px;
+            color: #4ade80;
+            margin-bottom: 15px;
+        }
+
+        .btn-row {
+            display: flex;
+            gap: 10px;
+        }
+
+        .action-btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .btn-save {
+            background: linear-gradient(180deg, #6366f1 0%, #4f46e5 100%);
+            color: white;
+        }
+
+        .btn-sell {
+            background: linear-gradient(180deg, #22c55e 0%, #16a34a 100%);
+            color: white;
+        }
+
+        .profile-card {
+            background: linear-gradient(180deg, #2a2a4a 0%, #1a1a3a 100%);
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            border: 2px solid #3a3a5a;
+            margin-bottom: 15px;
+        }
+
+        .profile-avatar {
+            font-size: 60px;
+            margin-bottom: 10px;
+        }
+
+        .profile-balance {
+            font-size: 32px;
+            font-weight: bold;
+            color: #ffd700;
+            margin: 10px 0;
+        }
+
+        .profile-info {
+            margin: 15px 0;
+        }
+
+        .profile-id {
+            color: #888;
+            font-size: 13px;
+            margin: 5px 0;
+        }
+
+        .profile-id span {
+            color: #aaa;
+        }
+
+        .add-balance-btn {
+            background: linear-gradient(180deg, #22c55e 0%, #16a34a 100%);
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        .inventory-empty {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+
+        .inventory-item {
+            background: linear-gradient(180deg, #2a2a4a 0%, #1a1a3a 100%);
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 2px solid #3a3a5a;
+        }
+
+        .inventory-item-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .inventory-item-icon {
+            font-size: 30px;
+        }
+
+        .inventory-item-name {
+            font-weight: bold;
+        }
+
+        .inventory-item-count {
+            color: #888;
+            font-size: 12px;
+        }
+
+        .inventory-item-sell {
+            background: #22c55e;
+            border: none;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+
+        .chance-text {
+            margin-top: 15px;
+            text-align: center;
+            color: #666;
+            font-size: 11px;
+        }
+
+        .back-btn {
+            background: #2a2a4a;
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+            margin-bottom: 15px;
+        }
+
+        .section-title {
+            font-size: 18px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .subcategories {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+
+        .subcat-btn {
+            background: #2a2a4a;
+            border: 2px solid #3a3a5a;
+            color: white;
+            padding: 10px 15px;
+            border-radius: 8px;
+            font-size: 13px;
+            cursor: pointer;
+        }
+
+        .subcat-btn.active {
+            border-color: #ffd700;
+            color: #ffd700;
+        }
+
+        .debug-info {
+            background: rgba(0,0,0,0.3);
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 11px;
+            color: #666;
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        @keyframes promoPop {
+            0% {
+                transform: scale(0.8);
+                opacity: 0;
+            }
+            50% {
+                transform: scale(1.05);
+            }
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .promo-success {
+            animation: promoPop 0.5s ease;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>💰 Магазин</h1>
+        <div class="balance" id="headerBalance">0₽</div>
+    </div>
+
+    <div class="nav">
+        <button class="nav-btn active" onclick="showPage('catalog')">🛍️ Каталог</button>
+        <button class="nav-btn" onclick="showPage('cases')">🎁 Кейсы</button>
+        <button class="nav-btn" onclick="showPage('freecase')">🎁 Бесплатный</button>
+        <button class="nav-btn" onclick="showPage('promocodes')">🎫 Промокоды</button>
+        <button class="nav-btn" onclick="showPage('inventory')">🎒 Инвентарь</button>
+        <button class="nav-btn" onclick="showPage('admin')">⚙️ Админ</button>
+        <button class="nav-btn" onclick="showPage('profile')">👤 Профиль</button>
+    </div>
+
+    <div class="content">
+        <div class="page active" id="page-catalog">
+            <div class="games-grid" id="gamesGrid"></div>
+        </div>
+
+        <div class="page" id="page-subcategories">
+            <button class="back-btn" onclick="showPage('catalog')">← Назад</button>
+            <div class="category-title" id="gameTitle"></div>
+            <div class="subcategories" id="subcategoriesGrid"></div>
+            <div class="products-grid" id="productsGrid"></div>
+        </div>
+
+        <div class="page" id="page-cases">
+            <div class="section-title">🎁 Доступные кейсы</div>
+            <div class="subcategories" id="casesFilterGrid" style="margin-bottom: 15px;"></div>
+            <div class="products-grid" id="casesGrid"></div>
+        </div>
+
+        <div class="page" id="page-freecase">
+            <div class="section-title">🎁 Бесплатный кейс</div>
+            <div class="profile-card" style="margin-bottom: 15px;">
+                <p style="color: #aaa; font-size: 13px; margin-bottom: 15px;">
+                    Откройте бесплатный кейс и получите деньги на баланс!
+                    Кейс доступен 1 раз в день.
+                </p>
+                <div id="freeCaseStatus"></div>
+            </div>
+            
+            <div class="case-box">
+                <div class="case-icon">🎁</div>
+                <div class="case-title">Бесплатный кейс</div>
+                
+                <div class="drum-container">
+                    <div class="center-line"></div>
+                    <div class="drum" id="freeDrum"></div>
+                </div>
+            </div>
+
+            <button class="open-btn" id="freeOpenBtn" onclick="openFreeCase()">🎰 Открыть бесплатно!</button>
+
+            <div class="result-box" id="freeResultBox">
+                <div class="result-amount" id="freeResultAmount">0</div>
+                <div class="result-label">рублей!</div>
+                
+                <div class="btn-row">
+                    <button class="action-btn btn-save" onclick="saveFreeCaseReward()">📦 Забрать</button>
+                </div>
+            </div>
+            
+            <div class="chance-text">
+                Шансы: 5-10₽ - 75%, 15-30₽ - 10%, 50₽ - 1%, 100₽ - 0.5%, 1000₽ - 0.1%
+            </div>
+        </div>
+
+        <div class="page" id="page-case-open">
+            <button class="back-btn" onclick="showPage('cases')">← Назад к кейсам</button>
+            
+            <div class="case-box">
+                <div class="case-icon">🎁</div>
+                <div class="case-title" id="caseTitle">Кейс с голдой</div>
+                
+                <div class="drum-container">
+                    <div class="center-line"></div>
+                    <div class="drum" id="drum"></div>
+                </div>
+            </div>
+
+            <button class="open-btn" id="openBtn" onclick="spin()">🎰 Открыть за <span id="casePrice">49</span>₽</button>
+
+            <div class="result-box" id="resultBox">
+                <div class="result-amount" id="resultAmount">0</div>
+                <div class="result-label">голды!</div>
+                <div class="result-price" id="resultPrice">+0₽</div>
+                
+                <div class="btn-row">
+                    <button class="action-btn btn-save" onclick="saveToInventory()">📦 Отложить</button>
+                    <button class="action-btn btn-sell" onclick="sellGold()">💵 Продать</button>
+                </div>
+            </div>
+
+            <div class="chance-text">
+                Шансы: 10💰 - 60%, 50💰 - 30%, 100💰 - 5%, 500💰 - 2%, 1000💰 - 1.5%, 2500💰 - 0.8%, 5000💰 - 0.5%, 10000💰 - 0.2%
+            </div>
+        </div>
+
+        <div class="page" id="page-inventory">
+            <div class="section-title">🎒 Ваш инвентарь</div>
+            <div id="inventoryList"></div>
+        </div>
+
+        <div class="page" id="page-promocodes">
+            <div class="section-title">🎫 Активировать промокод</div>
+            
+            <div class="profile-card">
+                <div class="modal-input" style="margin-bottom: 10px;">
+                    <input type="text" class="modal-input" id="promoInput" placeholder="Введите промокод" style="width: 100%; margin-bottom: 0;">
+                </div>
+                <button class="open-btn" onclick="activatePromo()">🎁 Активировать</button>
+            </div>
+            
+            <div class="section-title" style="margin-top: 20px;">📋 Информация о промокодах</div>
+            <div class="profile-card">
+                <p style="color: #aaa; font-size: 13px; text-align: left;">
+                    Промокоды дают бонусные средства на баланс. Каждый промокод можно использовать только один раз.
+                </p>
+                <p style="color: #aaa; font-size: 13px; text-align: left; margin-top: 10px;">
+                    После активации промокода бонус будет зачислен на ваш баланс автоматически.
+                </p>
+            </div>
+            
+            <div id="promoResult"></div>
+        </div>
+
+        <div class="page" id="page-profile">
+            <div class="profile-card">
+                <div class="profile-avatar">👤</div>
+                <div class="profile-balance" id="profileBalance">0₽</div>
+                
+                <div class="profile-info">
+                    <p class="profile-id">Telegram ID: <span id="telegramId">-</span></p>
+                    <p class="profile-id">Bot ID: <span id="botId">-</span></p>
+                </div>
+                
+                <button class="add-balance-btn" onclick="addBalance()">💰 Пополнить баланс</button>
+            </div>
+            
+            <div class="debug-info" id="debugInfo">
+                Данные загружаются...
+            </div>
+        </div>
+
+        <div class="page" id="page-admin">
+            <div class="section-title">⚙️ Админ-панель</div>
+            
+            <div class="profile-card">
+                <p style="color: #aaa; font-size: 13px; margin-bottom: 15px;">
+                    Внимание! Это демо-версия. Все изменения сохраняются локально.
+                </p>
+            </div>
+            
+            <div class="section-title" style="margin-top: 20px;">🎫 Управление промокодами</div>
+            <div class="profile-card">
+                <input type="text" class="modal-input" id="adminPromoCode" placeholder="Код промокода" style="margin-bottom: 10px;">
+                <input type="number" class="modal-input" id="adminPromoBonus" placeholder="Бонус пользователю (руб)" style="margin-bottom: 10px;">
+                <input type="number" class="modal-input" id="adminPromoOwnerBonus" placeholder="Бонус владельцу (руб)" style="margin-bottom: 10px;">
+                <input type="number" class="modal-input" id="adminPromoMaxUses" placeholder="Лимит активаций (0 - безлимит)" style="margin-bottom: 10px;">
+                <input type="number" class="modal-input" id="adminPromoOwnerId" placeholder="ID владельца (по умолчанию 0)" style="margin-bottom: 15px;">
+                <button class="open-btn" onclick="adminCreatePromoAPI()">Создать промокод</button>
+                <div id="adminPromoResult" style="margin-top: 10px;"></div>
+            </div>
+            
+            <div class="section-title" style="margin-top: 20px;">💰 Изменить баланс</div>
+            <div class="profile-card">
+                <input type="number" class="modal-input" id="adminUserId" placeholder="ID пользователя" style="margin-bottom: 10px;">
+                <input type="number" class="modal-input" id="adminBalanceAmount" placeholder="Сумма (+/-)" style="margin-bottom: 15px;">
+                <button class="open-btn" style="background: #6366f1;" onclick="adminChangeBalanceAPI()">Изменить баланс</button>
+                <div id="adminBalanceResult" style="margin-top: 10px;"></div>
+            </div>
+            
+            <div class="section-title" style="margin-top: 20px;">🎁 Выдать предмет в инвентарь</div>
+            <div class="profile-card">
+                <input type="number" class="modal-input" id="adminInventoryUserId" placeholder="ID пользователя" style="margin-bottom: 10px;">
+                <select class="modal-input" id="adminItemType" style="margin-bottom: 10px;">
+                    <option value="gold">💰 Голда</option>
+                    <option value="money">💵 Деньги</option>
+                </select>
+                <input type="number" class="modal-input" id="adminItemAmount" placeholder="Количество/Сумма" style="margin-bottom: 15px;">
+                <button class="open-btn" style="background: #8b5cf6;" onclick="adminAddItemAPI()">Выдать предмет</button>
+                <div id="adminInventoryResult" style="margin-top: 10px;"></div>
+            </div>
+            
+            <div class="section-title" style="margin-top: 20px;">📊 Статистика (демо)</div>
+            <div class="profile-card">
+                <p>Всего пользователей: <span id="statTotalUsers">1</span></p>
+                <p>Активных промокодов: <span id="statActivePromos">4</span></p>
+                <p>Всего активаций: <span id="statTotalActivations">0</span></p>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="emailModal">
+        <div class="modal">
+            <div class="modal-title">📧 Введите почту Supercell ID</div>
+            
+            <div class="modal-product">
+                <div class="modal-product-name" id="modalProductName">Товар</div>
+                <div class="modal-product-price" id="modalProductPrice">0₽</div>
+            </div>
+            
+            <input type="email" class="modal-input" id="emailInput" placeholder="example@gmail.com">
+            <div class="modal-hint">Почта должна содержать @ и домен (например: @gmail.com)</div>
+            
+            <div class="modal-btns">
+                <button class="modal-btn modal-btn-cancel" onclick="closeEmailModal()">Отмена</button>
+                <button class="modal-btn modal-btn-buy" onclick="confirmPurchase()">Купить</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="productModal">
+        <div class="modal">
+            <div class="modal-title" id="productModalTitle">Название товара</div>
+            
+            <div class="modal-product">
+                <div class="product-icon" id="productModalIcon" style="font-size: 48px; margin-bottom: 10px;">💎</div>
+                <div class="modal-product-price" id="productModalPrice">0₽</div>
+            </div>
+            
+            <div id="productModalDescription" style="color: #aaa; font-size: 13px; text-align: left; margin-bottom: 15px; line-height: 1.5;">
+                Описание товара
+            </div>
+            
+            <div class="modal-btns">
+                <button class="modal-btn modal-btn-cancel" onclick="closeProductModal()">Назад</button>
+                <button class="modal-btn modal-btn-buy" id="productModalBuyBtn" onclick="buyFromModal()">Купить</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Устанавливаем API URL до загрузки Telegram WebApp
+        // Для продакшена замените 'your-hosting-url.com' на ваш реальный URL
+        // Пример: 'https://my-shop-bot.onrender.com'
+        window.API_URL = window.Telegram?.WebApp
+            ? 'https://your-hosting-url.com'  // TODO: Замените на ваш URL после деплоя!
+            : 'http://localhost:5000';
+        
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+
+        // Данные из бота - с официальными логотипами игр
+        const games = [
+            { id: 1, icon: 'https://brawlstars.fandom.com/wiki/Brawl_Stars_Logo.png?width=200', name: 'Brawl Stars' },
+            { id: 2, icon: 'https://clashroyale.fandom.com/wiki/Clash_Royale_Logo.png?width=200', name: 'Clash Royale' },
+            { id: 3, icon: 'https://clashofclans.fandom.com/wiki/Clash_of_Clans_Logo.png?width=200', name: 'Clash of Clans' },
+            { id: 4, icon: 'https://standoff2.fandom.com/wiki/Standoff_2_Logo.png?width=200', name: 'Stand Off 2' }
+        ];
+
+        const subCategories = {
+            1: { id: 1, name: '💰 Боевой пропуск', game_id: 1 },
+            2: { id: 2, name: '💎 Гемы', game_id: 1 },
+            3: { id: 3, name: '🎯 Бустеры', game_id: 1 },
+            4: { id: 4, name: '💰 Боевой пропуск', game_id: 2 },
+            5: { id: 5, name: '💎 Гемы', game_id: 2 },
+            6: { id: 6, name: '🏆 Сундуки', game_id: 2 },
+            7: { id: 7, name: '💰 Боевой пропуск', game_id: 3 },
+            8: { id: 8, name: '💎 Гемы', game_id: 3 },
+            9: { id: 9, name: '🛡️ Ресурсы', game_id: 3 },
+            10: { id: 10, name: '📦 Кейсы', game_id: 4 }
+        };
+
+        const products = {
+            1: { id: 1, name: 'Brawl Pass', price: 199, sub_category_id: 1, icon: '💰', description: 'Brawl Pass - это пропуск в Brawl Stars, который открывает эксклюзивные награды, включая один эксклюзивный скин, пины, иконки и спреи, а также дополнительные стандартные награды. Обратите внимание - данный товар рандом, шанс на получение Brawl Pass 50%.' },
+            2: { id: 2, name: 'Brawl Pass Plus', price: 299, sub_category_id: 1, icon: '💰', description: 'Brawl Pass Plus открывает эксклюзивные награды, включая две дополнительные цветовые вариации эксклюзивного скина, один титул, 20-процентное увеличение прогрессии. Обратите внимание - данный товар рандом, шанс на получение Brawl Pass 50%.' },
+            3: { id: 3, name: 'Pro Pass', price: 499, sub_category_id: 1, icon: '💰', description: 'Pro Pass предлагает расширенную систему наград и прогрессии. Даёт доступ к эксклюзивным косметическим предметам и другим преимуществам. Обратите внимание - данный товар рандом, шанс на получение Brawl Pass 50%.' },
+            4: { id: 4, name: '80 Гемов', price: 99, sub_category_id: 2, icon: '💎', description: '80 Гемов - игровая валюта Brawl Stars. Гемы используются для покупки скинов, бустеров и других косметических предметов.' },
+            5: { id: 5, name: '500 Гемов', price: 449, sub_category_id: 2, icon: '💎', description: '500 Гемов - игровая валюта Brawl Stars. Гемы используются для покупки скинов, бустеров и других косметических предметов.' },
+            6: { id: 6, name: '2800 Гемов', price: 1799, sub_category_id: 2, icon: '💎', description: '2800 Гемов - игровая валюта Brawl Stars. Гемы используются для покупки скинов, бустеров и других косметических предметов.' },
+            7: { id: 7, name: 'Бустер x1', price: 49, sub_category_id: 3, icon: '🎯', description: '1 Power Pincher - бустер для увеличения количества получаемых очков силы в два раза на 1 час.' },
+            8: { id: 8, name: 'Бустеры x10', price: 399, sub_category_id: 3, icon: '🎯', description: '10 Power Pinchers - бустеры для увеличения количества получаемых очков силы в два раса на 10 часов.' },
+            9: { id: 9, name: 'Pass Royale', price: 349, sub_category_id: 4, icon: '💰', description: 'Месячный боевой пропуск в Clash Royale. Открывает эксклюзивные награды, включая сундуки, золото и специальные предметы.' },
+            10: { id: 10, name: 'Pass Royale Premium', price: 549, sub_category_id: 4, icon: '💰', description: 'Premium боевой пропуск в Clash Royale. Включает все награды базового пасса плюс дополнительные эксклюзивные предметы.' },
+            11: { id: 11, name: '80 Гемов', price: 99, sub_category_id: 5, icon: '💎', description: '80 Гемов - игровая валюта Clash Royale. Гемы используются для покупки сундуков, ускорения прогресса и покупки карт.' },
+            12: { id: 12, name: '500 Гемов', price: 449, sub_category_id: 5, icon: '💎', description: '500 Гемов - игровая валюта Clash Royale. Гемы используются для покупки сундуков, ускорения прогресса и покупки карт.' },
+            13: { id: 13, name: '2500 Гемов', price: 1799, sub_category_id: 5, icon: '💎', description: '2500 Гемов - игровая валюта Clash Royale. Гемы используются для покупки сундуков, ускорения прогресса и покупки карт.' },
+            14: { id: 14, name: 'Сундук легенды', price: 499, sub_category_id: 6, icon: '🏆', description: 'Legendary Chest - сундук с гарантированной легендарной картой. Отличный выбор для получения редких карт!' },
+            15: { id: 15, name: 'Сундук чемпиона', price: 999, sub_category_id: 6, icon: '🏆', description: 'Champion Chest - эксклюзивный сундук чемпиона с гарантированной картой чемпиона и другими ценными наградами.' },
+            16: { id: 16, name: 'Gold Pass', price: 399, sub_category_id: 7, icon: '💰', description: 'Месячный боевой пропуск в Clash of Clans. Даёт эксклюзивные награды, включая скин строителя и дополнительные ресурсы.' },
+            17: { id: 17, name: 'Gold Pass Premium', price: 649, sub_category_id: 7, icon: '💰', description: 'Premium боевой пропуск в Clash of Clans. Включает все награды Gold Pass плюс эксклюзивные косметические предметы.' },
+            18: { id: 18, name: '80 Гемов', price: 99, sub_category_id: 8, icon: '💎', description: '80 Гемов - игровая валюта Clash of Clans. Гемы используются для покупки ресурсов, ускорения строительства и покупки расходников.' },
+            19: { id: 19, name: '500 Гемов', price: 449, sub_category_id: 8, icon: '💎', description: '500 Гемов - игровая валюта Clash of Clans. Гемы используются для покупки ресурсов, ускорения строительства и покупки расходников.' },
+            20: { id: 20, name: '1200 Гемов', price: 899, sub_category_id: 8, icon: '💎', description: '1200 Гемов - игровая валюта Clash of Clans. Гемы используются для покупки ресурсов, ускорения строительства и покупки расходников.' },
+            21: { id: 21, name: '14000 Гемов', price: 6999, sub_category_id: 8, icon: '💎', description: '14000 Гемов - игровая валюта Clash of Clans. Гемы используются для покупки ресурсов, ускорения строительства и покупки расходников.' },
+            22: { id: 22, name: '2 000 000 Золота', price: 299, sub_category_id: 9, icon: '🛡️', description: '2 000 000 Золота - основной ресурс Clash of Clans. Используется для строительства, улучшения и обучения войск.' },
+            23: { id: 23, name: '2 000 000 Эликсира', price: 299, sub_category_id: 9, icon: '🛡️', description: '2 000 000 Эликсира - основной ресурс Clash of Clans. Используется для обучения и улучшения войск.' },
+            24: { id: 24, name: '200 000 Тёмного эликсира', price: 499, sub_category_id: 9, icon: '🛡️', description: '200 000 Тёмного эликсира - редкий ресурс Clash of Clans. Используется для обучения темных эльфов и создания заклинаний.' },
+            28: { id: 28, name: 'Кейс с голдой', price: 129, sub_category_id: 10, icon: '🎁', isCase: true, description: 'Открыв кейс, вы можете получить голду: 10, 50, 100, 500, 1000, 1500, 2500, 5000 или 10000. Шансы указаны в описании кейса.' }
+        };
+
+        const rewards = [
+            { amount: 10, chance: 6000, class: 'common' },
+            { amount: 50, chance: 3000, class: 'bronze' },
+            { amount: 100, chance: 500, class: 'bronze' },
+            { amount: 500, chance: 200, class: 'silver' },
+            { amount: 1000, chance: 150, class: 'silver' },
+            { amount: 2500, chance: 80, class: 'gold' },
+            { amount: 5000, chance: 50, class: 'gold' },
+            { amount: 10000, chance: 20, class: 'gold' }
+        ];
+
+        const sellPrices = {
+            10: 49, 50: 89, 100: 199, 500: 399, 1000: 699,
+            2500: 1299, 5000: 1999, 10000: 3999
+        };
+
+        let currentBalance = parseInt(localStorage.getItem('balance') || '100');
+        let inventory = JSON.parse(localStorage.getItem('inventory') || '[]');
+        let statCasesOpened = parseInt(localStorage.getItem('statCasesOpened') || '0');
+        let statPurchases = parseInt(localStorage.getItem('statPurchases') || '0');
+        let currentCase = null;
+        let currentSubCategory = null;
+        let pendingPurchase = null;
+        let isSpinning = false;
+        let currentWinAmount = 0;
+        let currentWinPrice = 0;
+        let selectedProductForPurchase = null;
+        
+        // Данные пользователя
+        let telegramUserId = 0;
+        let botUserId = 0;
+        let username = '';
+
+        // API URL для бота (настройте под ваш сервер)
+        const API_URL = window.API_URL || 'http://localhost:5000';
+        
+        // Флаг админа
+        let isAdmin = false;
+        
+        // Функция для проверки админ-прав
+        async function checkAdminStatus() {
+            try {
+                const response = await fetch(API_URL + '/api/check_admin', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ user_id: telegramUserId })
+                });
+                const data = await response.json();
+                if (data.success) {
+                    isAdmin = data.is_admin;
+                    console.log('Admin status:', isAdmin);
+                }
+            } catch (e) {
+                console.log('API not available, using local mode');
+                isAdmin = false;
+            }
+        }
+        
+        // Функция для получения баланса с сервера
+        async function fetchBalance() {
+            try {
+                const response = await fetch(API_URL + '/api/get_balance', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ user_id: telegramUserId })
+                });
+                const data = await response.json();
+                if (data.success) {
+                    currentBalance = data.balance;
+                    updateBalanceDisplay();
+                }
+            } catch (e) {
+                console.log('API not available, using local balance');
+            }
+        }
+        
+        // Функция для создания промокода через API
+        async function adminCreatePromoAPI() {
+            const code = document.getElementById('adminPromoCode').value.trim().toUpperCase();
+            const userBonus = parseInt(document.getElementById('adminPromoBonus').value) || 0;
+            const ownerBonus = parseInt(document.getElementById('adminPromoOwnerBonus').value) || 0;
+            const maxUses = parseInt(document.getElementById('adminPromoMaxUses').value) || 0;
+            const ownerId = parseInt(document.getElementById('adminPromoOwnerId').value) || 0;
+            const resultDiv = document.getElementById('adminPromoResult');
+            
+            try {
+                const response = await fetch(API_URL + '/api/create_promo', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        user_id: telegramUserId,
+                        code: code,
+                        user_bonus: userBonus,
+                        owner_bonus: ownerBonus,
+                        max_uses: maxUses,
+                        owner_id: ownerId
+                    })
+                });
+                const data = await response.json();
+                if (data.success) {
+                    resultDiv.innerHTML = '<p style="color: #22c55e;">' + data.message + '</p>';
+                    // Также сохраняем локально
+                    adminPromoCodes[code] = {
+                        bonus: userBonus,
+                        ownerBonus: ownerBonus,
+                        maxUses: maxUses,
+                        used: 0,
+                        ownerId: ownerId
+                    };
+                    localStorage.setItem('adminPromoCodes', JSON.stringify(adminPromoCodes));
+                    Object.assign(validPromoCodes, adminPromoCodes);
+                    updateAdminStats();
+                } else {
+                    resultDiv.innerHTML = '<p style="color: #ef4444;">' + data.error + '</p>';
+                }
+            } catch (e) {
+                // Используем локальную версию
+                console.log('API not available, using local mode');
+                adminCreatePromo();
+            }
+            
+            // Очищаем поля
+            document.getElementById('adminPromoCode').value = '';
+            document.getElementById('adminPromoBonus').value = '';
+            document.getElementById('adminPromoOwnerBonus').value = '';
+            document.getElementById('adminPromoMaxUses').value = '';
+            document.getElementById('adminPromoOwnerId').value = '';
+        }
+        
+        // Функция для изменения баланса через API
+        async function adminChangeBalanceAPI() {
+            const userId = parseInt(document.getElementById('adminUserId').value);
+            const amount = parseInt(document.getElementById('adminBalanceAmount').value) || 0;
+            const resultDiv = document.getElementById('adminBalanceResult');
+            
+            if (!userId || amount === 0) {
+                resultDiv.innerHTML = '<p style="color: #ef4444;">Введите корректные данные!</p>';
+                return;
+            }
+            
+            try {
+                const response = await fetch(API_URL + '/api/change_balance', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        admin_id: telegramUserId,
+                        target_user_id: userId,
+                        amount: amount
+                    })
+                });
+                const data = await response.json();
+                if (data.success) {
+                    resultDiv.innerHTML = '<p style="color: #22c55e;">' + data.message + '</p>';
+                    // Также сохраняем локально
+                    const currentBalance = adminUserBalances[userId] || 0;
+                    adminUserBalances[userId] = currentBalance + amount;
+                    localStorage.setItem('adminUserBalances', JSON.stringify(adminUserBalances));
+                    
+                    // Обновляем баланс если это текущий пользователь
+                    if (userId === botUserId || userId === telegramUserId) {
+                        currentBalance = adminUserBalances[userId];
+                        updateBalanceDisplay();
+                    }
+                } else {
+                    resultDiv.innerHTML = '<p style="color: #ef4444;">' + data.error + '</p>';
+                }
+            } catch (e) {
+                console.log('API not available, using local mode');
+                adminChangeBalance();
+            }
+            
+            document.getElementById('adminUserId').value = '';
+            document.getElementById('adminBalanceAmount').value = '';
+            updateAdminStats();
+        }
+        
+        // Функция для добавления предмета через API
+        async function adminAddItemAPI() {
+            const userId = parseInt(document.getElementById('adminInventoryUserId').value);
+            const itemType = document.getElementById('adminItemType').value;
+            const amount = parseInt(document.getElementById('adminItemAmount').value) || 0;
+            const resultDiv = document.getElementById('adminInventoryResult');
+            
+            if (!userId || amount <= 0) {
+                resultDiv.innerHTML = '<p style="color: #ef4444;">Введите корректные данные!</p>';
+                return;
+            }
+            
+            try {
+                const response = await fetch(API_URL + '/api/add_inventory', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        admin_id: telegramUserId,
+                        target_user_id: userId,
+                        item_type: itemType,
+                        amount: amount
+                    })
+                });
+                const data = await response.json();
+                if (data.success) {
+                    resultDiv.innerHTML = '<p style="color: #22c55e;">' + data.message + '</p>';
+                } else {
+                    resultDiv.innerHTML = '<p style="color: #ef4444;">' + data.error + '</p>';
+                }
+            } catch (e) {
+                console.log('API not available, using local mode');
+                adminAddItem();
+            }
+            
+            document.getElementById('adminInventoryUserId').value = '';
+            document.getElementById('adminItemAmount').value = '';
+            updateAdminStats();
+        }
+        
+        // Функция для получения статистики
+        async function fetchAdminStats() {
+            try {
+                const response = await fetch(API_URL + '/api/get_stats', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ user_id: telegramUserId })
+                });
+                const data = await response.json();
+                if (data.success) {
+                    document.getElementById('statTotalUsers').textContent = data.stats.total_users;
+                    document.getElementById('statActivePromos').textContent = data.stats.active_promos;
+                    document.getElementById('statTotalActivations').textContent = data.stats.total_activations;
+                }
+            } catch (e) {
+                console.log('API not available, using local stats');
+            }
+        }
+        
+        // Скрываем кнопку админа, если пользователь не админ
+        // Для демо-режима показываем всем, но функционал работает через API
+        function updateAdminButtonVisibility() {
+            // Всегда показываем кнопку админа для демо-режима
+            // Проверка админ-прав делается при выполнении действий
+            const adminBtn = document.querySelector("button[onclick=\"showPage('admin')\"]");
+            if (adminBtn) {
+                // Всегда показываем для демо
+                adminBtn.style.display = 'inline-block';
+            }
+        }
+        
+        function init() {
+            // Получаем данные пользователя из Telegram
+            try {
+                const user = tg.initDataUnsafe?.user;
+                if (user) {
+                    telegramUserId = user.id || 0;
+                    username = user.username || '';
+                    // Генерируем Bot ID на основе Telegram ID
+                    botUserId = 1000000 + telegramUserId;
+                    
+                    // Сохраняем Bot ID если его нет
+                    const savedBotId = localStorage.getItem('botUserId');
+                    if (!savedBotId) {
+                        localStorage.setItem('botUserId', botUserId.toString());
+                    } else {
+                        botUserId = parseInt(savedBotId);
+                    }
+                }
+            } catch (e) {
+                console.log('Telegram data not available:', e);
+            }
+            
+            // Проверяем админ-права
+            checkAdminStatus().then(() => {
+                updateAdminButtonVisibility();
+                // Загружаем статистику если админ
+                if (isAdmin) {
+                    fetchAdminStats();
+                }
+            });
+            
+            // Пробуем получить баланс с сервера
+            fetchBalance();
+            
+            // Обновляем отображение ID
+            updateUserIdsDisplay();
+            
+            updateBalanceDisplay();
+            renderGames();
+            renderCases();
+            renderInventory();
+            updateDebugInfo();
+        }
+        
+        function updateUserIdsDisplay() {
+            const telegramIdEl = document.getElementById('telegramId');
+            const botIdEl = document.getElementById('botId');
+            
+            if (telegramIdEl) {
+                telegramIdEl.textContent = telegramUserId || '-';
+            }
+            if (botIdEl) {
+                botIdEl.textContent = botUserId || '-';
+            }
+        }
+
+        function saveData() {
+            localStorage.setItem('balance', currentBalance);
+            localStorage.setItem('inventory', JSON.stringify(inventory));
+            localStorage.setItem('statCasesOpened', statCasesOpened);
+            localStorage.setItem('statPurchases', statPurchases);
+            updateDebugInfo();
+        }
+
+        function updateDebugInfo() {
+            const info = `Balance: ${currentBalance}₽ | Inventory: ${inventory.length} items | Cases: ${statCasesOpened} | Purchases: ${statPurchases}`;
+            document.getElementById('debugInfo').textContent = info;
+        }
+
+        function updateBalanceDisplay() {
+            document.getElementById('headerBalance').textContent = currentBalance + '₽';
+            document.getElementById('profileBalance').textContent = currentBalance + '₽';
+        }
+
+        function showPage(pageId) {
+            // Проверка админ-прав при переходе на страницу админа
+            if (pageId === 'admin' && !isAdmin) {
+                alert('У вас нет доступа к админ-панели!');
+                return;
+            }
+            
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            
+            document.getElementById('page-' + pageId).classList.add('active');
+            
+            const navBtns = document.querySelectorAll('.nav-btn');
+            if (pageId === 'catalog') navBtns[0].classList.add('active');
+            else if (pageId === 'cases') navBtns[1].classList.add('active');
+            else if (pageId === 'freecase') { navBtns[2].classList.add('active'); checkFreeCaseStatus(); }
+            else if (pageId === 'promocodes') navBtns[3].classList.add('active');
+            else if (pageId === 'inventory') { navBtns[4].classList.add('active'); renderInventory(); }
+            else if (pageId === 'admin') navBtns[5].classList.add('active');
+            else if (pageId === 'profile') navBtns[6].classList.add('active');
+            
+            if (pageId === 'inventory') renderInventory();
+        }
+
+        function renderGames() {
+            const grid = document.getElementById('gamesGrid');
+            grid.innerHTML = games.map(g => `
+                <div class="game-card" onclick="showSubCategories(${g.id})">
+                    <img class="game-icon" src="${g.icon}" alt="${g.name}" onerror="this.style.display='none'">
+                    <div class="game-name">${g.name}</div>
+                </div>
+            `).join('');
+        }
+
+        function showSubCategories(gameId) {
+            const game = games.find(g => g.id === gameId);
+            document.getElementById('gameTitle').textContent = game.name;
+            
+            const subs = Object.values(subCategories).filter(s => s.game_id === gameId);
+            
+            const grid = document.getElementById('subcategoriesGrid');
+            grid.innerHTML = subs.map(s => `
+                <button class="subcat-btn ${currentSubCategory === s.id ? 'active' : ''}" 
+                    onclick="selectSubCategory(${s.id})">${s.name}</button>
+            `).join('');
+            
+            if (subs.length > 0) {
+                selectSubCategory(subs[0].id);
+            }
+            
+            showPage('subcategories');
+        }
+
+        function selectSubCategory(subId) {
+            currentSubCategory = subId;
+            document.querySelectorAll('.subcat-btn').forEach((btn, i) => {
+                const subs = Object.values(subCategories).filter(s => s.game_id === games.find(g => 
+                    document.getElementById('gameTitle').textContent === g.name
+                )?.id);
+                if (subs[i] && subs[i].id === subId) {
+                    btn.classList.add('active');
+                }
+            });
+            
+            renderProducts(subId);
+        }
+
+        function renderProducts(subId) {
+            const grid = document.getElementById('productsGrid');
+            const prods = Object.values(products).filter(p => p.sub_category_id === subId);
+            
+            grid.innerHTML = prods.map(p => `
+                <div class="product-card ${p.isCase ? 'case' : ''}" 
+                    onclick="${p.isCase ? 'openCasePage(' + p.id + ', ' + p.price + ')' : 'showProductModal(' + p.id + ', ' + p.price + ')'}">
+                    <div class="product-icon">${p.icon}</div>
+                    <div class="product-name">${p.name}</div>
+                    <div class="product-price">${p.price}₽</div>
+                </div>
+            `).join('');
+        }
+
+        function showProductModal(productId, price) {
+            console.log('showProductModal called with:', productId, price);
+            const product = products[productId];
+            
+            if (!product) {
+                console.error('Product not found:', productId);
+                tg.showAlert('Товар не найден');
+                return;
+            }
+            
+            selectedProductForPurchase = { productId, price, product };
+            
+            document.getElementById('productModalTitle').textContent = product.name || 'Товар';
+            document.getElementById('productModalIcon').textContent = product.icon || '📦';
+            document.getElementById('productModalPrice').textContent = (price || 0) + '₽';
+            document.getElementById('productModalDescription').textContent = product.description || 'Описание недоступно';
+            
+            // Use display:flex directly to ensure modal shows
+            const modal = document.getElementById('productModal');
+            modal.style.display = 'flex';
+            modal.classList.add('show');
+            console.log('Product Modal should be shown now, selectedProductForPurchase:', selectedProductForPurchase);
+        }
+
+        function closeProductModal() {
+            console.log('closeProductModal called');
+            const modal = document.getElementById('productModal');
+            modal.style.display = 'none';
+            modal.classList.remove('show');
+        }
+
+        function buyFromModal() {
+            console.log('buyFromModal called');
+            console.log('selectedProductForPurchase:', selectedProductForPurchase);
+            
+            if (!selectedProductForPurchase) {
+                console.log('No product selected - showing alert');
+                tg.showAlert('Ошибка: товар не выбран');
+                return;
+            }
+            
+            // Сохраняем данные перед закрытием
+            const productId = selectedProductForPurchase.productId;
+            const price = selectedProductForPurchase.price;
+            const product = selectedProductForPurchase.product;
+            
+            console.log('Calling showEmailModal with:', productId, price);
+            
+            // Закрываем модальное окно товара
+            const productModal = document.getElementById('productModal');
+            productModal.style.display = 'none';
+            productModal.classList.remove('show');
+            
+            // Сбрасываем selectedProductForPurchase
+            selectedProductForPurchase = null;
+            
+            // Небольшая задержка чтобы модальное окно успело закрыться
+            setTimeout(function() {
+                showEmailModal(productId, price);
+            }, 100);
+        }
+
+        // Список действительных промокодов (в реальном приложении - с сервера)
+        const validPromoCodes = {
+            'TEST': { bonus: 50, maxUses: 100, used: 0 },
+            'HELLO': { bonus: 100, maxUses: 50, used: 0 },
+            'BONUS': { bonus: 25, maxUses: 200, used: 0 },
+            'START': { bonus: 30, maxUses: 100, used: 0 }
+        };
+        
+        // Промокоды, которые пользователь уже активировал
+        let usedPromoCodes = JSON.parse(localStorage.getItem('usedPromoCodes') || '[]');
+        
+        function activatePromo() {
+            const promoCode = document.getElementById('promoInput').value.trim().toUpperCase();
+            const resultDiv = document.getElementById('promoResult');
+            
+            if (!promoCode) {
+                tg.showAlert('Введите промокод!');
+                return;
+            }
+            
+            // Проверяем, не активировал ли уже пользователь этот промокод
+            if (usedPromoCodes.includes(promoCode)) {
+                resultDiv.innerHTML = `
+                    <div class="profile-card" style="margin-top: 15px; border: 2px solid #ef4444;">
+                        <p style="color: #ef4444; font-size: 16px; font-weight: bold;">❌ Промокод уже использован</p>
+                        <p style="color: #aaa; font-size: 13px;">Вы уже активировали этот промокод ранее</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            // Проверяем, существует ли промокод
+            const promoInfo = validPromoCodes[promoCode];
+            if (!promoInfo) {
+                resultDiv.innerHTML = `
+                    <div class="profile-card" style="margin-top: 15px; border: 2px solid #ef4444;">
+                        <p style="color: #ef4444; font-size: 16px; font-weight: bold;">❌ Промокод не найден</p>
+                        <p style="color: #aaa; font-size: 13px;">Проверьте правильность ввода</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            // Проверяем лимит использований
+            if (promoInfo.used >= promoInfo.maxUses) {
+                resultDiv.innerHTML = `
+                    <div class="profile-card" style="margin-top: 15px; border: 2px solid #ef4444;">
+                        <p style="color: #ef4444; font-size: 16px; font-weight: bold;">❌ Промокод недоступен</p>
+                        <p style="color: #aaa; font-size: 13px;">Лимит активаций исчерпан</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            // Промокод действителен - активируем
+            validPromoCodes[promoCode].used++;
+            usedPromoCodes.push(promoCode);
+            localStorage.setItem('usedPromoCodes', JSON.stringify(usedPromoCodes));
+            
+            // Добавляем бонус
+            currentBalance += promoInfo.bonus;
+            saveData();
+            updateBalanceDisplay();
+            
+            // Показываем красивое окно успеха
+            resultDiv.innerHTML = `
+                <div class="profile-card promo-success" style="margin-top: 15px; border: 2px solid #22c55e; animation: promoPop 0.5s ease;">
+                    <p style="color: #22c55e; font-size: 20px; font-weight: bold;">🎉 Промокод активирован!</p>
+                    <p style="color: #ffd700; font-size: 36px; font-weight: bold; margin: 15px 0;">+${promoInfo.bonus}₽</p>
+                    <p style="color: #aaa; font-size: 13px;">Бонус зачислен на ваш баланс</p>
+                </div>
+            `;
+            
+            document.getElementById('promoInput').value = '';
+            
+            // Показываем уведомление через Telegram
+            tg.showAlert(`✅ Промокод активирован!\n\nБонус: +${promoInfo.bonus}₽\n\nБаланс: ${currentBalance}₽`);
+        }
+
+        function showEmailModal(productId, price) {
+            console.log('showEmailModal called with:', productId, price);
+            const product = products[productId];
+            
+            if (!product) {
+                console.error('Product not found:', productId);
+                tg.showAlert('Товар не найден');
+                return;
+            }
+            
+            pendingPurchase = { productId, price, product };
+            
+            document.getElementById('modalProductName').textContent = product.name || 'Товар';
+            document.getElementById('modalProductPrice').textContent = (price || 0) + '₽';
+            document.getElementById('emailInput').value = '';
+            
+            const modal = document.getElementById('emailModal');
+            modal.style.display = 'flex';
+            modal.classList.add('show');
+            console.log('Email modal should be shown now');
+        }
+
+        function closeEmailModal() {
+            const modal = document.getElementById('emailModal');
+            modal.style.display = 'none';
+            modal.classList.remove('show');
+            pendingPurchase = null;
+        }
+
+        function confirmPurchase() {
+            const email = document.getElementById('emailInput').value.trim();
+            
+            if (!email || !email.includes('@') || !email.includes('.')) {
+                tg.showAlert('Введите корректную почту!\nНапример: example@gmail.com');
+                return;
+            }
+            
+            if (!email.toLowerCase().includes('@gmail.com') && !email.toLowerCase().includes('@mail.ru')) {
+                tg.showAlert('Почта должна содержать @gmail.com или @mail.ru');
+                return;
+            }
+            
+            if (pendingPurchase) {
+                if (currentBalance >= pendingPurchase.price) {
+                    currentBalance -= pendingPurchase.price;
+                    statPurchases++;
+                    saveData();
+                    updateBalanceDisplay();
+                    
+                    tg.showAlert(`✅ Покупка успешна!\n\nТовар: ${pendingPurchase.product.name}\nПочта: ${email}\n\nСкоро с вами свяжутся для доставки!`);
+                    
+                    closeEmailModal();
+                } else {
+                    tg.showAlert('Недостаточно средств! Пополните баланс.');
+                }
+            }
+        }
+
+        // Текущий фильтр для кейсов
+        let currentCaseFilter = 'all';
+        
+        function renderCases() {
+            const grid = document.getElementById('casesGrid');
+            const filterGrid = document.getElementById('casesFilterGrid');
+            
+            // Сначала отображаем фильтры по играм
+            const gameFilters = [
+                { id: 'all', name: '🎲 Все' },
+                { id: 1, name: '⭐ Brawl Stars' },
+                { id: 2, name: '👑 Clash Royale' },
+                { id: 3, name: '🏰 Clash of Clans' },
+                { id: 4, name: '🔫 Stand Off 2' }
+            ];
+            
+            filterGrid.innerHTML = gameFilters.map(g => `
+                <button class="subcat-btn ${currentCaseFilter === g.id ? 'active' : ''}" 
+                    onclick="filterCases(${g.id})">${g.name}</button>
+            `).join('');
+            
+            // Фильтруем кейсы по выбранной игре
+            let caseProducts = Object.values(products).filter(p => p.isCase);
+            
+            if (currentCaseFilter !== 'all') {
+                caseProducts = caseProducts.filter(p => p.sub_category_id && 
+                    (getGameIdBySubCategory(p.sub_category_id) === currentCaseFilter));
+            }
+            
+            grid.innerHTML = caseProducts.map(p => `
+                <div class="product-card case" onclick="openCasePage(${p.id}, ${p.price})">
+                    <div class="product-icon">${p.icon}</div>
+                    <div class="product-name">${p.name}</div>
+                    <div class="product-price">${p.price}₽</div>
+                </div>
+            `).join('');
+        }
+        
+        function filterCases(gameId) {
+            currentCaseFilter = gameId;
+            renderCases();
+        }
+        
+        function getGameIdBySubCategory(subCategoryId) {
+            // Map subcategories to games
+            const map = {
+                1: 1, 2: 1, 3: 1,  // Brawl Stars
+                4: 2, 5: 2, 6: 2,  // Clash Royale
+                7: 3, 8: 3, 9: 3,  // Clash of Clans
+                10: 4              // Stand Off 2
+            };
+            return map[subCategoryId] || 1;
+        }
+
+        function openCasePage(caseId, price) {
+            currentCase = { id: caseId, price: price };
+            document.getElementById('casePrice').textContent = price;
+            document.getElementById('caseTitle').textContent = 'Кейс с голдой';
+            document.getElementById('resultBox').classList.remove('show');
+            
+            const drum = document.getElementById('drum');
+            drum.innerHTML = '';
+            drum.style.transform = 'translateY(0)';
+            
+            for (let i = 0; i < 15; i++) {
+                const r = rewards[Math.floor(Math.random() * rewards.length)];
+                const el = document.createElement('div');
+                el.className = `prize-item ${r.class}`;
+                el.textContent = `💰 ${r.amount}`;
+                el.dataset.amount = r.amount;
+                drum.appendChild(el);
+            }
+            
+            document.getElementById('openBtn').disabled = false;
+            showPage('case-open');
+        }
+
+        function calculateResult() {
+            const total = rewards.reduce((sum, r) => sum + r.chance, 0);
+            const roll = Math.random() * total;
+            
+            let cumulative = 0;
+            for (const r of rewards) {
+                cumulative += r.chance;
+                if (roll < cumulative) return r;
+            }
+            return rewards[0];
+        }
+
+        async function spin() {
+            if (isSpinning) return;
+            if (currentBalance < currentCase.price) {
+                tg.showAlert('Недостаточно средств!');
+                return;
+            }
+            
+            isSpinning = true;
+            document.getElementById('openBtn').disabled = true;
+            document.getElementById('resultBox').classList.remove('show');
+            
+            currentBalance -= currentCase.price;
+            statCasesOpened++;
+            saveData();
+            updateBalanceDisplay();
+            
+            const result = calculateResult();
+            currentWinAmount = result.amount;
+            currentWinPrice = sellPrices[result.amount];
+            
+            const drum = document.getElementById('drum');
+            drum.innerHTML = '';
+            drum.style.transition = 'none';
+            drum.style.transform = 'translateY(0)';
+            
+            const prizeHeight = 100;
+            const totalItems = 76;
+            const winPosition = 70;
+            
+            for (let i = 0; i < totalItems; i++) {
+                let r;
+                if (i === winPosition) {
+                    r = { amount: currentWinAmount, class: result.class };
+                } else {
+                    r = rewards[Math.floor(Math.random() * rewards.length)];
+                }
+                
+                const el = document.createElement('div');
+                el.className = `prize-item ${r.class}`;
+                el.textContent = `💰 ${r.amount}`;
+                el.dataset.amount = r.amount;
+                drum.appendChild(el);
+            }
+            
+            const containerHeight = 100;
+            const targetY = winPosition * prizeHeight - containerHeight / 2 + prizeHeight / 2;
+            const randomOffset = Math.floor(Math.random() * 40) - 20;
+            const finalY = targetY + randomOffset;
+            
+            await new Promise(resolve => setTimeout(resolve, 50));
+            drum.style.transition = 'transform 4s cubic-bezier(0.15, 0.85, 0.15, 1)';
+            drum.style.transform = `translateY(-${finalY}px)`;
+            
+            await new Promise(resolve => setTimeout(resolve, 4000));
+            
+            const centerIndex = Math.round(finalY / prizeHeight);
+            const prizeElements = drum.querySelectorAll('.prize-item');
+            
+            if (prizeElements[centerIndex] && prizeElements[centerIndex].dataset.amount) {
+                currentWinAmount = parseInt(prizeElements[centerIndex].dataset.amount);
+                currentWinPrice = sellPrices[currentWinAmount];
+            }
+            
+            document.getElementById('resultAmount').textContent = currentWinAmount.toLocaleString();
+            document.getElementById('resultPrice').textContent = `+${currentWinPrice}₽`;
+            document.getElementById('resultBox').classList.add('show');
+            
+            isSpinning = false;
+            renderStats();
+        }
+
+        function saveToInventory() {
+            inventory.push({
+                type: 'gold',
+                amount: currentWinAmount,
+                sellPrice: currentWinPrice
+            });
+            saveData();
+            renderInventory();
+            tg.showAlert(`Голда (${currentWinAmount}) добавлена в инвентарь!`);
+        }
+
+        function sellGold() {
+            currentBalance += currentWinPrice;
+            saveData();
+            updateBalanceDisplay();
+            tg.showAlert(`Голда продана за ${currentWinPrice}₽!`);
+            renderStats();
+        }
+
+        function renderInventory() {
+            const list = document.getElementById('inventoryList');
+            
+            if (inventory.length === 0) {
+                list.innerHTML = '<div class="inventory-empty">Инвентарь пуст</div>';
+                return;
+            }
+            
+            // Показываем каждый товар отдельно, без группировки
+            list.innerHTML = inventory.map((item, index) => `
+                <div class="inventory-item">
+                    <div class="inventory-item-info">
+                        <div class="inventory-item-icon">💰</div>
+                        <div>
+                            <div class="inventory-item-name">${item.amount} ${item.type === 'gold' ? 'голды' : ''}</div>
+                            <div class="inventory-item-count">${item.sellPrice}₽</div>
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 5px;">
+                        <button class="inventory-item-sell" onclick="withdrawFromInventory(${index})">Вывести</button>
+                        <button class="inventory-item-sell" style="background: #22c55e;" onclick="sellSingleFromInventory(${index})">Продать</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Функция для вывода голды
+        function withdrawFromInventory(index) {
+            const item = inventory[index];
+            if (item && item.type === 'gold') {
+                // Удаляем из инвентаря
+                inventory.splice(index, 1);
+                saveData();
+                renderInventory();
+                
+                // Показываем окно успеха
+                tg.showAlert(`✅ Заявка на вывод ${item.amount} голды принята!\n\nСкоро с вами свяжутся для вывода.`);
+            }
+        }
+        
+        function sellSingleFromInventory(index) {
+            const item = inventory[index];
+            if (item) {
+                currentBalance += item.sellPrice;
+                inventory.splice(index, 1);
+                saveData();
+                updateBalanceDisplay();
+                renderInventory();
+                tg.showAlert(`Продано за ${item.sellPrice}₽!`);
+            }
+        }
+        
+        // Бесплатный кейс
+        let freeCaseReward = 0;
+        let canOpenFreeCase = false;
+        
+        const freeRewards = [
+            { amount: 5, chance: 3000 },
+            { amount: 8, chance: 2500 },
+            { amount: 10, chance: 2000 },
+            { amount: 15, chance: 1000 },
+            { amount: 20, chance: 500 },
+            { amount: 30, chance: 500 },
+            { amount: 50, chance: 100 },
+            { amount: 100, chance: 50 },
+            { amount: 1000, chance: 10 }
+        ];
+        
+        function checkFreeCaseStatus() {
+            const lastFreeCase = localStorage.getItem('lastFreeCaseDate');
+            const today = new Date().toDateString();
+            const statusEl = document.getElementById('freeCaseStatus');
+            const openBtn = document.getElementById('freeOpenBtn');
+            
+            if (lastFreeCase === today) {
+                canOpenFreeCase = false;
+                statusEl.innerHTML = '<p style="color: #ef4444;">❌ Вы уже открывали бесплатный кейс сегодня</p>';
+                openBtn.disabled = true;
+                openBtn.style.background = '#4a4a6a';
+                openBtn.textContent = 'Уже открыто';
+            } else {
+                canOpenFreeCase = true;
+                statusEl.innerHTML = '<p style="color: #22c55e;">✅ Кейс доступен!</p>';
+                openBtn.disabled = false;
+                openBtn.style.background = '';
+                openBtn.textContent = '🎰 Открыть бесплатно!';
+            }
+        }
+        
+        function calculateFreeReward() {
+            const total = freeRewards.reduce((sum, r) => sum + r.chance, 0);
+            const roll = Math.random() * total;
+            let cumulative = 0;
+            for (const r of freeRewards) {
+                cumulative += r.chance;
+                if (roll < cumulative) return r.amount;
+            }
+            return freeRewards[0].amount;
+        }
+        
+        function openFreeCase() {
+            if (!canOpenFreeCase) {
+                tg.showAlert('Бесплатный кейс уже открыт сегодня!');
+                return;
+            }
+            
+            // Рассчитываем награду
+            freeCaseReward = calculateFreeReward();
+            
+            // Анимация
+            const drum = document.getElementById('freeDrum');
+            drum.innerHTML = '';
+            drum.style.transition = 'none';
+            drum.style.transform = 'translateY(0)';
+            
+            const prizeHeight = 100;
+            const totalItems = 50;
+            const winPosition = 40;
+            
+            for (let i = 0; i < totalItems; i++) {
+                const isWin = i === winPosition;
+                const el = document.createElement('div');
+                el.className = 'prize-item common';
+                el.textContent = isWin ? `+${freeCaseReward}₽` : `+${calculateFreeReward()}₽`;
+                el.dataset.amount = isWin ? freeCaseReward : '0';
+                drum.appendChild(el);
+            }
+            
+            const targetY = winPosition * prizeHeight - 50;
+            
+            setTimeout(() => {
+                drum.style.transition = 'transform 3s cubic-bezier(0.15, 0.85, 0.15, 1)';
+                drum.style.transform = `translateY(-${targetY}px)`;
+            }, 50);
+            
+            setTimeout(() => {
+                document.getElementById('freeResultAmount').textContent = freeCaseReward + '₽';
+                document.getElementById('freeResultBox').classList.add('show');
+                
+                // Сохраняем дату
+                localStorage.setItem('lastFreeCaseDate', new Date().toDateString());
+                canOpenFreeCase = false;
+                checkFreeCaseStatus();
+            }, 3100);
+        }
+        
+        function saveFreeCaseReward() {
+            currentBalance += freeCaseReward;
+            saveData();
+            updateBalanceDisplay();
+            document.getElementById('freeResultBox').classList.remove('show');
+            tg.showAlert(`Поздравляем! Вы получили ${freeCaseReward}₽ на баланс!`);
+        }
+
+        function addBalance() {
+            currentBalance += 1000;
+            saveData();
+            updateBalanceDisplay();
+            tg.showAlert('Баланс пополнен на 1000₽ (тестовый режим)');
+        }
+
+        function renderStats() {
+            const totalGold = inventory.reduce((sum, i) => sum + (i.type === 'gold' ? i.amount : 0), 0);
+            document.getElementById('statCases').textContent = statCasesOpened;
+            document.getElementById('statGold').textContent = totalGold;
+            document.getElementById('statPurchases').textContent = statPurchases;
+        }
+        
+        // Админ-функции (демо-версия)
+        let adminPromoCodes = JSON.parse(localStorage.getItem('adminPromoCodes') || '{}');
+        let adminUserBalances = JSON.parse(localStorage.getItem('adminUserBalances') || '{}');
+        
+        function adminCreatePromo() {
+            const code = document.getElementById('adminPromoCode').value.trim().toUpperCase();
+            const userBonus = parseInt(document.getElementById('adminPromoBonus').value) || 0;
+            const ownerBonus = parseInt(document.getElementById('adminPromoOwnerBonus').value) || 0;
+            const maxUses = parseInt(document.getElementById('adminPromoMaxUses').value) || 0;
+            const ownerId = parseInt(document.getElementById('adminPromoOwnerId').value) || 0;
+            const resultDiv = document.getElementById('adminPromoResult');
+            
+            if (!code || userBonus <= 0) {
+                resultDiv.innerHTML = '<p style="color: #ef4444;">Введите корректные данные!</p>';
+                return;
+            }
+            
+            if (adminPromoCodes[code]) {
+                resultDiv.innerHTML = '<p style="color: #ef4444;">Промокод уже существует!</p>';
+                return;
+            }
+            
+            // Создаём промокод
+            adminPromoCodes[code] = {
+                bonus: userBonus,
+                ownerBonus: ownerBonus,
+                maxUses: maxUses,
+                used: 0,
+                ownerId: ownerId
+            };
+            
+            localStorage.setItem('adminPromoCodes', JSON.stringify(adminPromoCodes));
+            
+            resultDiv.innerHTML = `<p style="color: #22c55e;">✅ Промокод ${code} создан!\nБонус: ${userBonus}₽, Владелец: ${ownerId}, Лимит: ${maxUses || '∞'}</p>`;
+            
+            // Обновляем список промокодов в основном приложении
+            Object.assign(validPromoCodes, adminPromoCodes);
+            
+            // Очищаем поля
+            document.getElementById('adminPromoCode').value = '';
+            document.getElementById('adminPromoBonus').value = '';
+            document.getElementById('adminPromoOwnerBonus').value = '';
+            document.getElementById('adminPromoMaxUses').value = '';
+            document.getElementById('adminPromoOwnerId').value = '';
+            
+            updateAdminStats();
+        }
+        
+        function adminChangeBalance() {
+            const userId = parseInt(document.getElementById('adminUserId').value);
+            const amount = parseInt(document.getElementById('adminBalanceAmount').value) || 0;
+            const resultDiv = document.getElementById('adminBalanceResult');
+            
+            if (!userId || amount === 0) {
+                resultDiv.innerHTML = '<p style="color: #ef4444;">Введите корректные данные!</p>';
+                return;
+            }
+            
+            // Получаем текущий баланс пользователя (или 0 если нет)
+            const currentBalance = adminUserBalances[userId] || 0;
+            adminUserBalances[userId] = currentBalance + amount;
+            
+            localStorage.setItem('adminUserBalances', JSON.stringify(adminUserBalances));
+            
+            const newBalance = adminUserBalances[userId];
+            const sign = amount >= 0 ? '+' : '';
+            resultDiv.innerHTML = `<p style="color: #22c55e;">✅ Баланс пользователя ${userId} изменён!\nТеперь: ${newBalance}₽ (${sign}${amount}₽)</p>`;
+            
+            // Если это текущий пользователь - обновляем баланс
+            if (userId === botUserId || userId === telegramUserId) {
+                currentBalance = newBalance;
+                updateBalanceDisplay();
+            }
+            
+            document.getElementById('adminUserId').value = '';
+            document.getElementById('adminBalanceAmount').value = '';
+            
+            updateAdminStats();
+        }
+        
+        function adminAddItem() {
+            const userId = parseInt(document.getElementById('adminInventoryUserId').value);
+            const itemType = document.getElementById('adminItemType').value;
+            const amount = parseInt(document.getElementById('adminItemAmount').value) || 0;
+            const resultDiv = document.getElementById('adminInventoryResult');
+            
+            if (!userId || amount <= 0) {
+                resultDiv.innerHTML = '<p style="color: #ef4444;">Введите корректные данные!</p>';
+                return;
+            }
+            
+            // Создаём предмет
+            const item = {
+                type: itemType,
+                amount: amount,
+                sellPrice: itemType === 'money' ? amount : (sellPrices[amount] || 0)
+            };
+            
+            // Сохраняем в инвентарь пользователя (используем отдельный ключ)
+            const userInventoryKey = `inventory_${userId}`;
+            const userInventory = JSON.parse(localStorage.getItem(userInventoryKey) || '[]');
+            userInventory.push(item);
+            localStorage.setItem(userInventoryKey, JSON.stringify(userInventory));
+            
+            const itemName = itemType === 'gold' ? `${amount} голды` : `${amount}₽`;
+            resultDiv.innerHTML = `<p style="color: #22c55e;">✅ Предмет выдан!\nПользователь: ${userId}\nПредмет: ${itemName}</p>`;
+            
+            document.getElementById('adminInventoryUserId').value = '';
+            document.getElementById('adminItemAmount').value = '';
+            
+            updateAdminStats();
+        }
+        
+        function updateAdminStats() {
+            const promoCount = Object.keys(adminPromoCodes).length;
+            let totalActivations = 0;
+            Object.values(adminPromoCodes).forEach(p => totalActivations += p.used || 0);
+            
+            document.getElementById('statActivePromos').textContent = promoCount + 4; // +4 базовых
+            document.getElementById('statTotalActivations').textContent = totalActivations;
+        }
+        
+        // Объединяем промокоды
+        Object.assign(validPromoCodes, adminPromoCodes);
+
+        init();
+    </script>
+</body>
+</html>
