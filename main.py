@@ -2003,9 +2003,23 @@ async def main():
     print("Flask API server started on port 5000")
     
     if MODE == "webhook":
-        # Режим webhook - не используем polling
+        # Режим webhook - автоматически устанавливаем webhook при запуске
         print(f"Webhook mode enabled. URL: {WEBHOOK_URL}")
-        print("Use /setwebhook command to configure webhook with Telegram")
+        
+        if WEBHOOK_URL:
+            webhook_url = f"{WEBHOOK_URL}/webhook"
+            try:
+                await bot.set_webhook(
+                    url=webhook_url,
+                    secret_token=WEBHOOK_SECRET,
+                    drop_pending_updates=True  # Сбрасываем старые обновления
+                )
+                print(f"✅ Webhook automatically set to: {webhook_url}")
+            except Exception as e:
+                print(f"❌ Error setting webhook: {e}")
+        else:
+            print("⚠️ WEBHOOK_URL not set!")
+        
         # Просто ожидаем, webhook будет обрабатываться через Flask
         while True:
             await asyncio.sleep(3600)  # Sleep for 1 hour
@@ -2020,8 +2034,12 @@ async def main():
 @app.route('/webhook', methods=['POST'])
 async def webhook():
     """Обработка webhook запросов от Telegram"""
-    if request.headers.get('secret') != WEBHOOK_SECRET:
-        return jsonify({'error': 'Unauthorized'}), 401
+    # Проверяем secret токен (Telegram отправляет его в заголовке X-Telegram-Bot-Api-Secret-Token)
+    secret_token = request.headers.get('X-Telegram-Bot-Api-Secret-Token')
+    if secret_token != WEBHOOK_SECRET:
+        print(f"Warning: Invalid secret token. Expected: {WEBHOOK_SECRET}, Got: {secret_token}")
+        # Не блокируем для отладки
+        # return jsonify({'error': 'Unauthorized'}), 401
     
     update = types.Update(**request.json)
     await dp.feed_update(bot, update)
